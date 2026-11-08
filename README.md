@@ -30,7 +30,24 @@ claude.ai / 手機 App
 
 ## 工具
 
-所有工具都採用 **回歸黃道（tropical）、地心（geocentric）**。
+預設採用 **回歸黃道（tropical）、地心（geocentric）**，可用 `opt` 參數切換（見下）。
+
+### `opt`：可選的計算模式
+
+四個工具都有一個可選的 `opt` 字串，用逗號或空格分隔多個選項，不填就是預設。
+
+| 選項 | 效果 |
+|---|---|
+| `sid=lahiri` | **恆星黃道**，ayanamsa 可選 `lahiri`、`fagan`、`kp`（Krishnamurti）、`raman`、`yukteshwar`、`deluce`；只寫 `sid` 預設用 Lahiri。宮位也一併改為恆星黃道 |
+| `topo` | **地平（topocentric）**座標，以你給的經緯度為觀測點。主要影響月亮（約差 0.5°），其他星體幾乎不變 |
+| `helio` | **日心**座標。地球（`Ear`）取代太陽和月亮；沒有南北交點和莉莉絲；**不輸出宮位和上升／天頂**（日心沒有意義） |
+
+例子：`opt="sid=lahiri"`、`opt="sid=fagan topo"`、`opt="helio"`。
+
+- 有使用選項時，輸出的第一行會標示模式，例如 `[sid=LAHIRI]`，方便確認。
+- `helio` 與 `topo` 不能並用（會忽略 `topo`）。
+- 在 `transits`、`progressed`、`synastry` 中，選項會套用到所有星盤；`topo` 使用各人自己的經緯度。
+- 填錯會回傳明確的錯誤訊息，例如 `unknown ayanamsa 'xxx'`。
 
 ### 通用參數
 
@@ -121,7 +138,18 @@ Asp: Moon tri Sun 0.2; Jup opp Ura 0.3; ...
 
 > 用 swisseph 算 1990-05-15 14:30 香港出生的本命盤（22.3193N, 114.1694E），然後看 2026-11-08 的行運。
 
-驗證用的標準答案（本命盤）：`ASC 24Vir49`、`MC 24Gem51`、太陽 `24Tau10`。
+用恆星黃道（Lahiri）：
+
+> 用 swisseph，opt 設 sid=lahiri，算同一個人的本命盤。
+
+驗證用的標準答案（本命盤）：
+
+| 模式 | ASC | 太陽 |
+|---|---|---|
+| 預設（回歸） | `24Vir49` | `24Tau10` |
+| `sid=lahiri` | `01Vir05` | `00Tau26` |
+
+太陽的差約 23°44′，等於 1990 年的 Lahiri ayanamsa。
 
 ---
 
@@ -231,7 +259,8 @@ curl -s localhost:8799/test123/mcp -X POST \
 
 ## 限制
 
-- **只支援回歸黃道、地心座標。** 沒有恆星黃道（sidereal）、日心或地平（topocentric）選項。
+- **預設是回歸黃道、地心座標。** 恆星黃道、地平和日心要靠 `opt` 開啟；尚未支援：自訂 ayanamsa 數值、地平座標的海拔（固定為 0 米）。
+- **`opt` 使用 Swiss Ephemeris 的全域設定**（`set_sid_mode`、`set_topo`），每次呼叫都會重新設定，單人使用沒有問題；若同時有大量並行請求，理論上可能互相干擾。
 - **不知道出生時間（`unknown`）：** 以當地中午計算，不輸出宮位和上升／天頂，月亮可能有最多約 ±6° 的誤差。
 - **極圈附近：** Placidus、Koch 等宮位制在高緯度無法計算，程式會**靜默改用整宮制（Whole Sign）**。
 - **星曆檔範圍：** 隨附的 `*_18.se1` 涵蓋約公元 1800–2400 年。

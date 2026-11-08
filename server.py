@@ -24,6 +24,15 @@ mcp = FastMCP(
     streamable_http_path=PATH,
 )
 
+from starlette.requests import Request
+from starlette.responses import PlainTextResponse
+
+
+@mcp.custom_route("/health", methods=["GET", "HEAD"])
+async def health(request: Request) -> PlainTextResponse:
+    return PlainTextResponse("ok")
+
+
 SIGNS = ["Ari", "Tau", "Gem", "Can", "Leo", "Vir", "Lib", "Sco", "Sag", "Cap", "Aqu", "Pis"]
 BODIES = [
     ("Sun", swe.SUN), ("Moon", swe.MOON), ("Mer", swe.MERCURY), ("Ven", swe.VENUS),
